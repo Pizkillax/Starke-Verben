@@ -1,0 +1,364 @@
+<!doctype html>
+<!-- ===========================================================
+   🚀✨ Pizkilla’s Soft – by Cris (2025) ✨🚀
+   💻 Proyecto: Flashcards Verbos Fuertes
+   📌 Aplicación creada con cariño para repasar alemán
+   🌈🔒 Todos los derechos reservados – Autoría de Cris
+   =========================================================== -->
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Flashcards Verbos Fuertes</title>
+<style>
+  :root{
+    --bg:#0b1020; --card:#121a2f; --ink:#eaf0ff; --muted:#9fb0d0; --accent:#7aa2ff; --ring:#2a3a6a;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background: radial-gradient(1200px 800px at 20% -10%, #131b34 0%, #0b1020 60%);
+    color:var(--ink); font-family:system-ui, Segoe UI, Roboto, Inter, Arial, sans-serif;
+    display:grid; place-items:center; padding:24px;
+  }
+  .app{ width:min(900px,96vw); display:grid; gap:16px; }
+
+  .card-wrap{
+    position:relative;
+    margin-top: clamp(12px, 18vh, 200px); /* 🔽 bajamos la tarjeta para dejar espacio arriba */
+  }
+
+  .card{
+    position:relative; width:100%; min-height:320px; border-radius:22px;
+    background: linear-gradient(135deg, var(--card), #0f1730);
+    border:1px solid #1d2a52;
+    box-shadow: 0 20px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
+    padding:28px; overflow:hidden;
+  }
+
+  /* BADGE DEL WECHSEL */
+  .wechsel-badge{
+    position:absolute; top:-10px; right:14px; z-index:11;
+    font-size:13px; color:var(--accent);
+    border:1px solid var(--ring); border-radius:999px;
+    padding:6px 10px; background:rgba(255,255,255,0.03);
+    backdrop-filter: blur(2px);
+    user-select:none;
+    pointer-events:auto;
+    opacity:0; transform: translateY(-6px);
+    transition: opacity .2s ease, transform .2s ease;
+    white-space: pre-line; 
+  }
+  .wechsel-badge.visible{ opacity:1; transform: translateY(0); }
+
+  /* PANEL DE REPASO */
+  .wechsel-list{
+    position:absolute;
+    top:-10px; left:0; right:0;
+    transform: translateY(-100%) translateY(-20px); /* justo encima de la tarjeta + hueco */
+    z-index:12;
+    max-height:60vh;
+    overflow-y:auto;
+    border:1px solid var(--ring); border-radius:14px; padding:10px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    box-shadow: 0 12px 40px rgba(0,0,0,.45);
+    display:none;
+  }
+  .wechsel-list.visible{ display:block; }
+  .wechsel-list .title{
+    width:100%; font-size:12px; color:var(--muted);
+    letter-spacing:.6px; text-transform:uppercase; margin-bottom:6px;
+  }
+  .wechsel-table{ width:100%; border-collapse:collapse; font-size:14px; }
+  .wechsel-table thead th{
+    position:sticky; top:0; background:#0e1630; color:var(--muted);
+    text-align:left; font-weight:700; letter-spacing:.3px; padding:8px; border-bottom:1px solid var(--ring);
+  }
+  .wechsel-table tbody td{ padding:8px; border-bottom:1px dashed rgba(255,255,255,.08); }
+  .wechsel-table tbody tr{ cursor:pointer; }
+  .wechsel-table tbody tr:hover{ background:rgba(255,255,255,.04); }
+
+  .face{
+    position:absolute; inset:0; padding:28px; border-radius:22px;
+    display:grid; place-items:center; gap:16px; text-align:center;
+    opacity:0; visibility:hidden; pointer-events:none;
+  }
+  .face.active{ opacity:1; visibility:visible; pointer-events:auto; }
+
+  .flip-out-y{ animation: flipOutY 260ms ease forwards; }
+  .flip-in-y { animation: flipInY 260ms ease forwards; }
+  .flip-out-x{ animation: flipOutX 260ms ease forwards; }
+  .flip-in-x { animation: flipInX 260ms ease forwards; }
+
+  @keyframes flipOutY{ from{transform:rotateY(0deg)} to{transform:rotateY(90deg); opacity:0} }
+  @keyframes flipInY { from{transform:rotateY(-90deg); opacity:0} to{transform:rotateY(0deg); opacity:1} }
+  @keyframes flipOutX{ from{transform:rotateX(0deg)} to{transform:rotateX(90deg); opacity:0} }
+  @keyframes flipInX { from{transform:rotateX(-90deg); opacity:0} to{transform:rotateX(0deg); opacity:1} }
+
+  .face h2{ margin:0; font-weight:800; font-size:clamp(32px,7.5vw,72px); }
+  .forms .grid{ display:grid; gap:10px; grid-template-columns: repeat(3, minmax(0,1fr)); width:min(780px,100%); }
+  .pill{
+    border:1px solid var(--ring); border-radius:14px; padding:14px 12px;
+    display:grid; gap:8px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));
+  }
+  .pill .lbl{ font-size:12px; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); }
+  .pill .val{ font-size: clamp(18px, 3vw, 28px); font-weight:700; line-height:1.15; }
+  .meaning h3{ margin:0; font-size: clamp(26px, 5vw, 42px); font-weight:700; }
+
+  .controls{ display:flex; gap:10px; justify-content:space-between; align-items:center; flex-wrap:wrap; }
+  button{
+    appearance:none; border:1px solid var(--ring); background:transparent; color:var(--ink);
+    padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600;
+    transition: transform .06s ease, background .2s, border-color .2s;
+  }
+  button:hover{ background:#0e1630; border-color:#33447e; }
+  button:active{ transform:scale(.98); }
+  .primary{ background: linear-gradient(180deg,#1a2b5d,#15224a); border-color:#405aa3; }
+  .counter{ color:var(--muted); font-size:14px; padding:6px 10px; border:1px dashed var(--ring); border-radius:10px; }
+
+   @media (max-width:640px){ .forms .grid{ grid-template-columns:1fr; } }
+
+  
+  .firma{
+  position:fixed;
+  bottom:8px; left:50%;
+  transform:translateX(-50%);
+  font-size:12px; color:var(--muted); opacity:0.7;
+}
+</style>
+</head>
+<body>
+  <div class="app">
+    <div class="card-wrap">
+      <div id="wechsel" class="wechsel-badge" aria-hidden="true"></div>
+      <div id="wechselList" class="wechsel-list" role="menu" aria-hidden="true"></div>
+
+      <div class="card" id="card" tabindex="0" aria-live="polite">
+        <section class="face front active" id="front"><h2 id="infinitiv">—</h2></section>
+        <section class="face forms" id="forms">
+          <div class="forms-inner">
+            <div class="grid">
+              <div class="pill"><div class="lbl">Präsens (3ª)</div><div class="val" id="prs">—</div></div>
+              <div class="pill"><div class="lbl">Präteritum</div><div class="val" id="prt">—</div></div>
+              <div class="pill"><div class="lbl">Partizip II</div><div class="val" id="pp">—</div></div>
+            </div>
+          </div>
+        </section>
+        <section class="face meaning" id="meaning"><h3 id="es">—</h3></section>
+      </div>
+    </div>
+    <div class="controls">
+      <div>
+        <button id="prevBtn">← Anterior</button>
+        <button id="nextBtn" class="primary">Siguiente →</button>
+      </div>
+      <div>
+        <button id="shuffleBtn">Barajar</button>
+        <span class="counter" id="counter">0 / 0</span>
+      </div>
+    </div>
+  </div>
+
+<div class="firma">🚀 Pizkilla’s Soft – by Cris © 2025</div>
+
+<script>
+const VERBS = [
+  { infinitiv: "essen", praesens: "isst", praeteritum: "aß", partizip2: "hat gegessen", es: "comer", wechsel: "ss--ss--ß--ss\ne--i/ie--a--e" },
+  { infinitiv: "geben", praesens: "gibt", praeteritum: "gab", partizip2: "hat gegeben", es: "dar", wechsel: "e--i/ie--a--e" },
+  { infinitiv: "fressen", praesens: "frisst", praeteritum: "fraß", partizip2: "hat gefressen", es: "comer(animales)", wechsel: "ss--ss--ß--ss\ne--i/ie--a--e" },
+  { infinitiv: "messen", praesens: "misst", praeteritum: "maß", partizip2: "hat gemessen", es: "medir", wechsel: "ss--ss--ß--ss\ne--i/ie--a--e" },
+  { infinitiv: "vergessen", praesens: "vergisst", praeteritum: "vergaß", partizip2: "hat vergessen", es: "olvidar", wechsel: "ss--ss--ß--ss\ne--i/ie--a--e" },
+  { infinitiv: "lesen", praesens: "liest", praeteritum: "las", partizip2: "hat gelesen", es: "leer", wechsel: "e--i/ie--a--e" },
+  { infinitiv: "sehen", praesens: "sieht", praeteritum: "sah", partizip2: "hat gesehen", es: "ver", wechsel: "e--i/ie--a--e" },
+  { infinitiv: "nehmen", praesens: "nimmt", praeteritum: "nahm", partizip2: "hat genommen", es: "tomar/coger", wechsel: "e--i/ie--a--o" },
+  { infinitiv: "helfen", praesens: "hilft", praeteritum: "half", partizip2: "hat geholfen", es: "ayudar", wechsel: "e--i/ie--a--o" },
+  { infinitiv: "sprechen", praesens: "spricht", praeteritum: "sprach", partizip2: "hat gesprochen", es: "hablar", wechsel: "e--i/ie--a--o" },
+  { infinitiv: "treffen", praesens: "trifft", praeteritum: "traf", partizip2: "hat getroffen", es: "encontar/quedar", wechsel: "e--i/ie--a--o" },
+  { infinitiv: "sterben", praesens: "stirbt", praeteritum: "starb", partizip2: "ist gestorben", es: "morir", wechsel: "e--i/ie--a--o" },
+  { infinitiv: "werfen", praesens: "wirft", praeteritum: "warf", partizip2: "hat geworfen", es: "tirar/lanzar", wechsel: "e--i/ie--a--o" },
+  { infinitiv: "brechen", praesens: "bricht", praeteritum: "brach", partizip2: "hat gebrochen", es: "romper", wechsel: "e--i/ie--a--o" },
+  { infinitiv: "stehlen", praesens: "stiehlt", praeteritum: "stahl", partizip2: "hat gestohlen", es: "robar", wechsel: "e--i/ie--a--o" },
+  { infinitiv: "singen", praesens: "singt", praeteritum: "sang", partizip2: "hat gesungen", es: "cantar", wechsel: "i--i--a--u" },
+  { infinitiv: "sinken", praesens: "sinkt", praeteritum: "sank", partizip2: "ist gesunken", es: "hundirse", wechsel: "i--i--a--u" },
+  { infinitiv: "springen", praesens: "springt", praeteritum: "sprang", partizip2: "ist gesprungen", es: "saltar", wechsel: "i--i--a--u" },
+  { infinitiv: "klingen", praesens: "klingt", praeteritum: "klang", partizip2: "hat geklungen", es: "sonar", wechsel: "i--i--a--u" },
+  { infinitiv: "trinken", praesens: "trinkt", praeteritum: "trank", partizip2: "hat getrunken", es: "beber", wechsel: "i--i--a--u" },
+  { infinitiv: "stinken", praesens: "stinkt", praeteritum: "stank", partizip2: "hat gestunken", es: "apestar", wechsel: "i--i--a--u" },
+  { infinitiv: "zwingen", praesens: "zwingt", praeteritum: "zwang", partizip2: "hat gezwungen", es: "obligar", wechsel: "i--i--a--u" },
+  { infinitiv: "finden", praesens: "findet", praeteritum: "fand", partizip2: "hat gefunden", es: "encontrar", wechsel: "i--i--a--u" },
+  { infinitiv: "binden", praesens: "bindet", praeteritum: "band", partizip2: "hat gebunden", es: "atar", wechsel: "i--i--a--u" },
+  { infinitiv: "bleiben", praesens: "bleibt", praeteritum: "blieb", partizip2: "ist geblieben", es: "quedarse/permanecer", wechsel: "ei--ei--ie--ie" },
+  { infinitiv: "schreiben", praesens: "schreibt", praeteritum: "schrieb", partizip2: "hat geschrieben", es: "escribir", wechsel: "ei--ei--ie--ie" },
+  { infinitiv: "steigen", praesens: "steigt", praeteritum: "stieg", partizip2: "ist gestiegen", es: "subir/ascender", wechsel: "ei--ei--ie--ie" },
+  { infinitiv: "leihen", praesens: "leiht", praeteritum: "lieh", partizip2: "hat geliehen", es: "prestar", wechsel: "ei--ei--ie--ie" },
+  { infinitiv: "meiden", praesens: "meidet", praeteritum: "mied", partizip2: "hat gemieden", es: "evitar", wechsel: "ei--ei--ie--ie" },
+  { infinitiv: "verzeihen", praesens: "verzeiht", praeteritum: "verzieh", partizip2: "hat verziehen", es: "perdonar", wechsel: "ei--ei--ie--ie" },
+  { infinitiv: "entscheiden", praesens: "entscheidet", praeteritum: "entschied", partizip2: "hat entschieden", es: "decidir", wechsel: "ei--ei--ie--ie" },
+  { infinitiv: "scheinen", praesens: "scheint", praeteritum: "schien", partizip2: "hat geschienen", es: "brillar", wechsel: "ei--ei--ie--ie" },
+  { infinitiv: "fahren", praesens: "fährt", praeteritum: "fuhr", partizip2: "ist gefahren", es: "conducir/ir", wechsel: "a--ä--u--a" },
+  { infinitiv: "schlagen", praesens: "schlägt", praeteritum: "schlug", partizip2: "hat geschlagen", es: "golpear", wechsel: "a--ä--u--a" },
+  { infinitiv: "tragen", praesens: "trägt", praeteritum: "trug", partizip2: "hat getragen", es: "llevar/cargar", wechsel: "a--ä--u--a" },
+  { infinitiv: "wachsen", praesens: "wächst", praeteritum: "wuchs", partizip2: "ist gewachsen", es: "crecer", wechsel: "a--ä--u--a" }
+  { infinitiv: "treten", praesens: "tritt", praeteritum: "trat", partizip2: "hat/ist getreten", es: "pisar/patear", wechsel: "" },
+  { infinitiv: "ringen", praesens: "ringt", praeteritum: "rang", partizip2: "hat gerungen", es: "luchar/forcejear", wechsel: "i--i--a--u" },
+  { infinitiv: "lassen", praesens: "lässt", praeteritum: "ließ", partizip2: "hat gelassen", es: "dejar/permitir", wechsel: "a--ä--ie--a" },
+  { infinitiv: "raten", praesens: "rät", praeteritum: "riet", partizip2: "hat geraten", es: "aconsejar/adivinar", wechsel: "a--ä--ie--a" },
+  { infinitiv: "geraten", praesens: "gerät", praeteritum: "geriet", partizip2: "ist geraten", es: "salir/resultar; entrar en", wechsel: "a--ä--ie--a" },
+  { infinitiv: "braten", praesens: "brät", praeteritum: "briet", partizip2: "hat gebraten", es: "asar/freír", wechsel: "a--ä--ie--a" },
+  { infinitiv: "halten", praesens: "hält", praeteritum: "hielt", partizip2: "hat gehalten", es: "sujetar/mantener", wechsel: "a--ä--ie--a" },
+  { infinitiv: "erhalten", praesens: "erhält", praeteritum: "erhielt", partizip2: "hat erhalten", es: "recibir/obtener", wechsel: "a--ä--ie--a" },
+  { infinitiv: "schlafen", praesens: "schläft", praeteritum: "schlief", partizip2: "hat geschlafen", es: "dormir", wechsel: "a--ä--ie--a" },
+  { infinitiv: "fallen", praesens: "fällt", praeteritum: "fiel", partizip2: "ist gefallen", es: "caer", wechsel: "a--ä--ie--a" },
+  { infinitiv: "gefallen", praesens: "gefällt", praeteritum: "gefiel", partizip2: "hat gefallen", es: "gustar", wechsel: "a--ä--ie--a" },
+  { infinitiv: "laufen", praesens: "läuft", praeteritum: "lief", partizip2: "ist gelaufen", es: "correr, andar", wechsel: "au--äu--ie--au" }
+
+];
+
+let idx = 0;
+let face = 0;
+
+const card = document.getElementById('card');
+const faces = { 0: document.getElementById('front'), 1: document.getElementById('forms'), 2: document.getElementById('meaning') };
+const elInf = document.getElementById('infinitiv');
+const elPrs = document.getElementById('prs');
+const elPrt = document.getElementById('prt');
+const elPp  = document.getElementById('pp');
+const elEs  = document.getElementById('es');
+const counter = document.getElementById('counter');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const shuffleBtn = document.getElementById('shuffleBtn');
+const wechselBadge = document.getElementById('wechsel');
+const wechselList = document.getElementById('wechselList');
+
+function render(){
+  const v = VERBS[idx] || {};
+  elInf.textContent = v.infinitiv || '—';
+  elPrs.textContent = v.praesens || '—';
+  elPrt.textContent = v.praeteritum || '—';
+  elPp.textContent  = v.partizip2 || '—';
+  elEs.textContent  = v.es || '—';
+  counter.textContent = `${idx+1} / ${VERBS.length}`;
+
+  const w = (v.wechsel || '').trim();
+  if(w){
+    wechselBadge.textContent = w.replace(/--/g, "→");
+    wechselBadge.classList.add('visible');
+    wechselBadge.setAttribute('aria-hidden','false');
+  }else{
+    wechselBadge.textContent = '';
+    wechselBadge.classList.remove('visible');
+    wechselBadge.setAttribute('aria-hidden','true');
+  }
+
+  Object.values(faces).forEach(f=>f.classList.remove('active'));
+  faces[face].classList.add('active');
+  card.setAttribute('aria-label',
+    face===0 ? `Infinitivo: ${v.infinitiv||''}` :
+    face===1 ? `Formas: Präsens ${v.praesens||''}, Präteritum ${v.praeteritum||''}, Partizip II ${v.partizip2||''}` :
+               `Traducción: ${v.es||''}`);
+
+  hideWechselList();
+  buildWechselList((v.wechsel || '').trim());
+}
+
+function animateFlip(fromFace, toFace){
+  const useX = (fromFace===1 && toFace===2)||(fromFace===2 && toFace===1);
+  const outCls=useX?'flip-out-x':'flip-out-y';
+  const inCls=useX?'flip-in-x':'flip-in-y';
+  const outEl=faces[fromFace];
+  const inEl=faces[toFace];
+  outEl.classList.remove('active');
+  outEl.classList.add(outCls);
+  inEl.classList.add('active',inCls);
+  function clean(el,cls){ el.classList.remove(cls); el.removeEventListener('animationend',onEnd);}
+  function onEnd(){ clean(outEl,outCls); clean(inEl,inCls);}
+  outEl.addEventListener('animationend',onEnd);
+  inEl.addEventListener('animationend',onEnd);
+}
+
+function flip(){const prevFace=face;face=(face+1)%3;animateFlip(prevFace,face);}
+function next(){idx=(idx+1)%VERBS.length;face=0;render();}
+function prev(){idx=(idx-1+VERBS.length)%VERBS.length;face=0;render();}
+function shuffle(){
+  for(let i=VERBS.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[VERBS[i],VERBS[j]]=[VERBS[j],VERBS[i]];}
+  idx=0;face=0;render();
+}
+
+function buildWechselList(pattern){
+  wechselList.innerHTML='';
+  if(!pattern) return;
+  const title=document.createElement('div');
+  title.className='title';
+  title.textContent='Mismo cambio – repaso';
+  wechselList.appendChild(title);
+
+  const matches=VERBS.map((v,i)=>({...v,_i:i})).filter(v=>(v.wechsel||'').trim()===pattern.trim());
+
+  const table=document.createElement('table');
+  table.className='wechsel-table';
+  table.innerHTML=`
+    <thead><tr>
+      <th>Infinitiv</th><th>Präsens (3ª)</th><th>Präteritum</th><th>Partizip II</th><th>ES</th>
+    </tr></thead><tbody></tbody>`;
+  const tbody=table.querySelector('tbody');
+
+  matches.forEach(v=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${v.infinitiv}</td>
+      <td>${v.praesens}</td>
+      <td>${v.praeteritum}</td>
+      <td>${v.partizip2}</td>
+      <td>${v.es||''}</td>`;
+    tr.addEventListener('click',e=>{
+      e.stopPropagation();
+      idx=v._i;face=0;
+      hideWechselList();
+      render();
+    });
+    tbody.appendChild(tr);
+  });
+  wechselList.appendChild(table);
+}
+
+function showWechselList(){
+  if(!wechselList.classList.contains('visible')){
+    wechselList.classList.add('visible');
+    wechselList.setAttribute('aria-hidden','false');
+  }
+}
+function hideWechselList(){
+  if(wechselList.classList.contains('visible')){
+    wechselList.classList.remove('visible');
+    wechselList.setAttribute('aria-hidden','true');
+  }
+}
+
+wechselBadge.addEventListener('click',e=>{
+  e.stopPropagation();
+  const v=VERBS[idx]||{};
+  const pattern=(v.wechsel||'').trim();
+  if(!pattern) return;
+  buildWechselList(pattern);
+  if(wechselList.classList.contains('visible')) hideWechselList();
+  else showWechselList();
+});
+document.addEventListener('click',()=>{ hideWechselList(); });
+
+card.addEventListener('click',flip);
+window.addEventListener('keydown',e=>{
+  if(e.key===' '){e.preventDefault();flip();}
+  else if(e.key==='ArrowRight'){next();}
+  else if(e.key==='ArrowLeft'){prev();}
+  else if(e.key==='Enter'){flip();}
+});
+prevBtn.addEventListener('click',prev);
+nextBtn.addEventListener('click',next);
+shuffleBtn.addEventListener('click',shuffle);
+
+render();
+</script>
+</body>
+</html>
