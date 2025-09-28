@@ -25,7 +25,7 @@
 
   .card-wrap{
     position:relative;
-    margin-top: clamp(12px, 18vh, 200px); /* 🔽 bajamos la tarjeta para dejar espacio arriba */
+    margin-top: clamp(12px, 18vh, 200px); /* 🔽 dejamos espacio arriba para el panel */
   }
 
   .card{
@@ -51,7 +51,7 @@
   }
   .wechsel-badge.visible{ opacity:1; transform: translateY(0); }
 
-  /* PANEL DE REPASO */
+  /* PANEL DE REPASO (encima de la tarjeta) */
   .wechsel-list{
     position:absolute;
     top:-10px; left:0; right:0;
@@ -117,20 +117,74 @@
   .primary{ background: linear-gradient(180deg,#1a2b5d,#15224a); border-color:#405aa3; }
   .counter{ color:var(--muted); font-size:14px; padding:6px 10px; border:1px dashed var(--ring); border-radius:10px; }
 
-   @media (max-width:640px){ .forms .grid{ grid-template-columns:1fr; } }
+  @media (max-width:640px){ .forms .grid{ grid-template-columns:1fr; } }
 
-  
   .firma{
-  position:fixed;
-  bottom:8px; left:50%;
-  transform:translateX(-50%);
-  font-size:12px; color:var(--muted); opacity:0.7;
+    position:fixed;
+    bottom:8px; left:50%;
+    transform:translateX(-50%);
+    font-size:12px; color:var(--muted); opacity:0.7;
+  }
+
+  /* ==== BUSCADOR (añadido) ==== */
+  .search{ position:relative; min-width:min(320px, 70vw); }
+  .search input{
+    width:100%; padding:10px 12px; border-radius:10px;
+    border:1px solid var(--ring); background:rgba(255,255,255,0.03);
+    color:var(--ink); font-weight:600;
+  }
+  .search input::placeholder{ color:var(--muted); font-weight:500; }
+  .search-list{
+    position:absolute; top:44px; left:0; right:0; z-index:15;
+    display:none; max-height:44vh; overflow:auto;
+    border:1px solid var(--ring); border-radius:12px; padding:6px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    box-shadow: 0 12px 40px rgba(0,0,0,.45);
+  }
+  .search-list.visible{ display:block; }
+  .search-item{
+    display:flex; justify-content:space-between; gap:8px;
+    padding:8px 10px; border-radius:8px; cursor:pointer;
+  }
+  .search-item:hover{ background:rgba(255,255,255,.06); }
+  .search-item .inf{ font-weight:700; }
+  .search-item .es{ color:var(--muted); font-size:12px; }
+  @media (max-width:640px){ .search{ min-width:100%; } }
+
+/* ===== OPTIMIZACIÓN MÓVIL (mínima y no intrusiva) ===== */
+@media (max-width: 640px) {
+  /* Tarjeta un poco más compacta */
+  .card { min-height: 240px; padding: 16px; }
+
+  /* Tipografías ajustadas para que quepa todo bien */
+  .face h2 { font-size: 28px; }
+  .pill .val { font-size: 20px; }
+  .meaning h3 { font-size: 24px; }
+
+  /* Controles en columna para evitar apretujes */
+  .controls { flex-direction: column; gap: 8px; }
+
+  /* Buscador a ancho completo */
+  .search { min-width: 100%; }
+  .search-list { max-height: 50vh; }
+
+  /* Panel de “Mismo cambio”: que respire en pantallas estrechas */
+  .wechsel-list { max-width: 95vw; }
+
+  /* Si la tabla se desborda en móvil, permitir scroll horizontal */
+  .wechsel-table { display: block; overflow-x: auto; }
+  .wechsel-table thead th, .wechsel-table tbody td { white-space: nowrap; }
+
+  /* Botones: un pelín más grandes para el pulgar */
+  button { padding: 12px 14px; }
 }
+
 </style>
 </head>
 <body>
   <div class="app">
     <div class="card-wrap">
+      <!-- BADGE + LISTA DEL WECHSEL -->
       <div id="wechsel" class="wechsel-badge" aria-hidden="true"></div>
       <div id="wechselList" class="wechsel-list" role="menu" aria-hidden="true"></div>
 
@@ -148,11 +202,19 @@
         <section class="face meaning" id="meaning"><h3 id="es">—</h3></section>
       </div>
     </div>
+
     <div class="controls">
       <div>
         <button id="prevBtn">← Anterior</button>
         <button id="nextBtn" class="primary">Siguiente →</button>
       </div>
+
+      <!-- 🔎 Buscador (añadido) -->
+      <div class="search">
+        <input id="searchBox" type="search" placeholder="Buscar: infinitivo o ES…" autocomplete="off" />
+        <div id="searchList" class="search-list" aria-hidden="true"></div>
+      </div>
+
       <div>
         <button id="shuffleBtn">Barajar</button>
         <span class="counter" id="counter">0 / 0</span>
@@ -160,12 +222,24 @@
     </div>
   </div>
 
-<div class="firma">🚀 Pizkilla’s Soft – by Cris © 2025</div>
+  <div class="firma">🚀 Pizkilla’s Soft – by Cris © 2025</div>
 
 <script>
 const VERBS = [
   { infinitiv: "essen", praesens: "isst", praeteritum: "aß", partizip2: "hat gegessen", es: "comer", wechsel: "ss--ss--ß--ss\ne--i/ie--a--e" },
   { infinitiv: "geben", praesens: "gibt", praeteritum: "gab", partizip2: "hat gegeben", es: "dar", wechsel: "e--i/ie--a--e" },
+  { infinitiv: "treten", praesens: "tritt", praeteritum: "trat", partizip2: "hat/ist getreten", es: "pisar/patear", wechsel: "" },
+  { infinitiv: "ringen", praesens: "ringt", praeteritum: "rang", partizip2: "hat gerungen", es: "luchar/forcejear", wechsel: "i--i--a--u" },
+  { infinitiv: "lassen", praesens: "lässt", praeteritum: "ließ", partizip2: "hat gelassen", es: "dejar/permitir", wechsel: "a--ä--ie--a" },
+  { infinitiv: "raten", praesens: "rät", praeteritum: "riet", partizip2: "hat geraten", es: "aconsejar/adivinar", wechsel: "a--ä--ie--a" },
+  { infinitiv: "geraten", praesens: "gerät", praeteritum: "geriet", partizip2: "ist geraten", es: "salir/resultar; entrar en", wechsel: "a--ä--ie--a" },
+  { infinitiv: "braten", praesens: "brät", praeteritum: "briet", partizip2: "hat gebraten", es: "asar/freír", wechsel: "a--ä--ie--a" },
+  { infinitiv: "halten", praesens: "hält", praeteritum: "hielt", partizip2: "hat gehalten", es: "sujetar/mantener", wechsel: "a--ä--ie--a" },
+  { infinitiv: "erhalten", praesens: "erhält", praeteritum: "erhielt", partizip2: "hat erhalten", es: "recibir/obtener", wechsel: "a--ä--ie--a" },
+  { infinitiv: "schlafen", praesens: "schläft", praeteritum: "schlief", partizip2: "hat geschlafen", es: "dormir", wechsel: "a--ä--ie--a" },
+  { infinitiv: "fallen", praesens: "fällt", praeteritum: "fiel", partizip2: "ist gefallen", es: "caer", wechsel: "a--ä--ie--a" },
+  { infinitiv: "gefallen", praesens: "gefällt", praeteritum: "gefiel", partizip2: "hat gefallen", es: "gustar", wechsel: "a--ä--ie--a" },
+  { infinitiv: "laufen", praesens: "läuft", praeteritum: "lief", partizip2: "ist gelaufen", es: "correr, andar", wechsel: "au--äu--ie--au" },
   { infinitiv: "fressen", praesens: "frisst", praeteritum: "fraß", partizip2: "hat gefressen", es: "comer(animales)", wechsel: "ss--ss--ß--ss\ne--i/ie--a--e" },
   { infinitiv: "messen", praesens: "misst", praeteritum: "maß", partizip2: "hat gemessen", es: "medir", wechsel: "ss--ss--ß--ss\ne--i/ie--a--e" },
   { infinitiv: "vergessen", praesens: "vergisst", praeteritum: "vergaß", partizip2: "hat vergessen", es: "olvidar", wechsel: "ss--ss--ß--ss\ne--i/ie--a--e" },
@@ -241,67 +315,73 @@ function render(){
 
   Object.values(faces).forEach(f=>f.classList.remove('active'));
   faces[face].classList.add('active');
-  card.setAttribute('aria-label',
-    face===0 ? `Infinitivo: ${v.infinitiv||''}` :
-    face===1 ? `Formas: Präsens ${v.praesens||''}, Präteritum ${v.praeteritum||''}, Partizip II ${v.partizip2||''}` :
-               `Traducción: ${v.es||''}`);
+  const aria = face===0
+    ? `Infinitivo: ${v.infinitiv || ''}`
+    : face===1
+      ? `Formas: Präsens ${v.praesens || ''}, Präteritum ${v.praeteritum || ''}, Partizip II ${v.partizip2 || ''}`
+      : `Traducción: ${v.es || ''}`;
+  card.setAttribute('aria-label', aria);
 
   hideWechselList();
   buildWechselList((v.wechsel || '').trim());
 }
 
 function animateFlip(fromFace, toFace){
-  const useX = (fromFace===1 && toFace===2)||(fromFace===2 && toFace===1);
-  const outCls=useX?'flip-out-x':'flip-out-y';
-  const inCls=useX?'flip-in-x':'flip-in-y';
-  const outEl=faces[fromFace];
-  const inEl=faces[toFace];
+  const useX = (fromFace===1 && toFace===2) || (fromFace===2 && toFace===1);
+  const outCls = useX ? 'flip-out-x' : 'flip-out-y';
+  const inCls  = useX ? 'flip-in-x'  : 'flip-in-y';
+  const outEl = faces[fromFace];
+  const inEl  = faces[toFace];
   outEl.classList.remove('active');
   outEl.classList.add(outCls);
-  inEl.classList.add('active',inCls);
-  function clean(el,cls){ el.classList.remove(cls); el.removeEventListener('animationend',onEnd);}
-  function onEnd(){ clean(outEl,outCls); clean(inEl,inCls);}
-  outEl.addEventListener('animationend',onEnd);
-  inEl.addEventListener('animationend',onEnd);
+  inEl.classList.add('active', inCls);
+  function clean(el, cls){ el.classList.remove(cls); el.removeEventListener('animationend', onEnd); }
+  function onEnd(){ clean(outEl,outCls); clean(inEl,inCls); }
+  outEl.addEventListener('animationend', onEnd);
+  inEl.addEventListener('animationend', onEnd);
 }
 
-function flip(){const prevFace=face;face=(face+1)%3;animateFlip(prevFace,face);}
-function next(){idx=(idx+1)%VERBS.length;face=0;render();}
-function prev(){idx=(idx-1+VERBS.length)%VERBS.length;face=0;render();}
+function flip(){ const prevFace = face; face = (face + 1) % 3; animateFlip(prevFace, face); }
+function next(){ idx = (idx + 1) % VERBS.length; face = 0; render(); }
+function prev(){ idx = (idx - 1 + VERBS.length) % VERBS.length; face = 0; render(); }
 function shuffle(){
-  for(let i=VERBS.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[VERBS[i],VERBS[j]]=[VERBS[j],VERBS[i]];}
-  idx=0;face=0;render();
+  for(let i=VERBS.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [VERBS[i],VERBS[j]]=[VERBS[j],VERBS[i]]; }
+  idx = 0; face = 0; render();
 }
 
+/* ======== PANEL DE WECHSEL (TABLA DE REPASO) ======== */
 function buildWechselList(pattern){
-  wechselList.innerHTML='';
+  wechselList.innerHTML = '';
   if(!pattern) return;
-  const title=document.createElement('div');
-  title.className='title';
-  title.textContent='Mismo cambio – repaso';
+
+  const title = document.createElement('div');
+  title.className = 'title';
+  title.textContent = 'Mismo cambio – repaso';
   wechselList.appendChild(title);
 
-  const matches=VERBS.map((v,i)=>({...v,_i:i})).filter(v=>(v.wechsel||'').trim()===pattern.trim());
+  const matches = VERBS
+    .map((v,i)=>({ ...v, _i: i }))
+    .filter(v => (v.wechsel||'').trim() === pattern.trim());
 
-  const table=document.createElement('table');
-  table.className='wechsel-table';
-  table.innerHTML=`
+  const table = document.createElement('table');
+  table.className = 'wechsel-table';
+  table.innerHTML = `
     <thead><tr>
       <th>Infinitiv</th><th>Präsens (3ª)</th><th>Präteritum</th><th>Partizip II</th><th>ES</th>
     </tr></thead><tbody></tbody>`;
-  const tbody=table.querySelector('tbody');
+  const tbody = table.querySelector('tbody');
 
   matches.forEach(v=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
       <td>${v.infinitiv}</td>
       <td>${v.praesens}</td>
       <td>${v.praeteritum}</td>
       <td>${v.partizip2}</td>
       <td>${v.es||''}</td>`;
-    tr.addEventListener('click',e=>{
+    tr.addEventListener('click', (e)=>{
       e.stopPropagation();
-      idx=v._i;face=0;
+      idx = v._i; face = 0;
       hideWechselList();
       render();
     });
@@ -310,40 +390,115 @@ function buildWechselList(pattern){
   wechselList.appendChild(table);
 }
 
-function showWechselList(){
+function showWechselList(){ 
   if(!wechselList.classList.contains('visible')){
-    wechselList.classList.add('visible');
+    wechselList.classList.add('visible'); 
     wechselList.setAttribute('aria-hidden','false');
   }
 }
-function hideWechselList(){
+function hideWechselList(){ 
   if(wechselList.classList.contains('visible')){
-    wechselList.classList.remove('visible');
+    wechselList.classList.remove('visible'); 
     wechselList.setAttribute('aria-hidden','true');
   }
 }
 
-wechselBadge.addEventListener('click',e=>{
+wechselBadge.addEventListener('click', (e)=>{
   e.stopPropagation();
-  const v=VERBS[idx]||{};
-  const pattern=(v.wechsel||'').trim();
+  const v = VERBS[idx] || {};
+  const pattern = (v.wechsel || '').trim();
   if(!pattern) return;
   buildWechselList(pattern);
   if(wechselList.classList.contains('visible')) hideWechselList();
   else showWechselList();
 });
-document.addEventListener('click',()=>{ hideWechselList(); });
+document.addEventListener('click', ()=>{ hideWechselList(); });
 
-card.addEventListener('click',flip);
-window.addEventListener('keydown',e=>{
-  if(e.key===' '){e.preventDefault();flip();}
-  else if(e.key==='ArrowRight'){next();}
-  else if(e.key==='ArrowLeft'){prev();}
-  else if(e.key==='Enter'){flip();}
+card.addEventListener('click', flip);
+window.addEventListener('keydown', (e)=>{
+  if(e.key===' '){ e.preventDefault(); flip(); }
+  else if(e.key==='ArrowRight'){ next(); }
+  else if(e.key==='ArrowLeft'){ prev(); }
+  else if(e.key==='Enter'){ flip(); }
 });
-prevBtn.addEventListener('click',prev);
-nextBtn.addEventListener('click',next);
-shuffleBtn.addEventListener('click',shuffle);
+prevBtn.addEventListener('click', prev);
+nextBtn.addEventListener('click', next);
+shuffleBtn.addEventListener('click', shuffle);
+
+/* ======== BUSCADOR POR INFINITIVO / ES (AÑADIDO) ======== */
+const searchBox  = document.getElementById('searchBox');
+const searchList = document.getElementById('searchList');
+
+function normalize(str){ return (str||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+
+function searchVerbs(q){
+  const n = normalize(q.trim());
+  if(!n) return [];
+  const scored = VERBS.map((v,i)=>{
+    const inf = normalize(v.infinitiv);
+    const es  = normalize(v.es||'');
+    const starts = (inf.startsWith(n) ? 2 : 0) + (es.startsWith(n) ? 1 : 0);
+    const contains = (!starts && (inf.includes(n)||es.includes(n))) ? 1 : 0;
+    const score = starts ? (10 - Math.min(inf.length, 9)) + starts : contains;
+    return { v, i, score };
+  }).filter(x=>x.score>0);
+  scored.sort((a,b)=> b.score - a.score || a.v.infinitiv.localeCompare(b.v.infinitiv));
+  return scored;
+}
+
+function buildSearchList(items){
+  searchList.innerHTML = '';
+  if(!items.length){
+    searchList.setAttribute('aria-hidden','true');
+    searchList.classList.remove('visible');
+    return;
+  }
+  items.slice(0,12).forEach(({v,i})=>{
+    const div = document.createElement('div');
+    div.className='search-item';
+    div.innerHTML = `<span class="inf">${v.infinitiv}</span><span class="es">${v.es||''}</span>`;
+    div.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      idx = i; face = 0;
+      hideSearchList();
+      render();
+      card.focus();
+    });
+    searchList.appendChild(div);
+  });
+  searchList.classList.add('visible');
+  searchList.setAttribute('aria-hidden','false');
+}
+
+function hideSearchList(){
+  searchList.classList.remove('visible');
+  searchList.setAttribute('aria-hidden','true');
+}
+
+if(searchBox){
+  searchBox.addEventListener('input', ()=>{
+    const q = searchBox.value;
+    const res = searchVerbs(q);
+    buildSearchList(res);
+  });
+  searchBox.addEventListener('keydown',(e)=>{
+    if(e.key==='Escape'){ searchBox.value=''; hideSearchList(); }
+    else if(e.key==='Enter'){
+      const res = searchVerbs(searchBox.value);
+      if(res.length){
+        idx = res[0].i; face = 0;
+        hideSearchList();
+        render();
+        card.focus();
+      }
+    }
+  });
+}
+document.addEventListener('click', (e)=>{
+  if(!searchList.contains(e.target) && e.target!==searchBox){
+    hideSearchList();
+  }
+});
 
 render();
 </script>
