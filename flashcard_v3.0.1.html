@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashCards - Aprende a tu ritmo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #faf8f5;
+            --surface: #ffffff;
+            --primary: #d97742;
+            --primary-light: #e89a6f;
+            --secondary: #8b6f47;
+            --text: #2d2520;
+            --text-light: #6b5d52;
+            --border: #e8dfd5;
+            --shadow: rgba(139, 111, 71, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .subtitle {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            font-weight: 300;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* Buttons */
+        button, .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.65rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        button:hover:not(:disabled), .btn:hover {
+            background: var(--primary-light);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        button.secondary:hover {
+            background: var(--bg);
+            border-color: var(--secondary);
+        }
+
+        button.small {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+        }
+
+        /* Deck List */
+        .deck-list {
+            display: grid;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .deck-item {
+            background: var(--surface);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .deck-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .deck-info h3 {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+
+        .deck-meta {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+
+        .deck-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Input */
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
+            background: var(--surface);
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
+            resize: vertical;
+            min-height: 80px;
+            background: var(--surface);
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        /* Cards */
+        .card-list {
+            display: grid;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .card-item {
+            background: var(--surface);
+            padding: 0.875rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: 0.75rem;
+        }
+
+        .card-content {
+            flex: 1;
+            font-size: 0.875rem;
+        }
+
+        .card-front {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .card-back {
+            color: var(--text-light);
+            font-size: 0.8rem;
+        }
+
+        .card-image-preview {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        /* Flashcard Study */
+        .flashcard-container {
+            perspective: 1000px;
+            margin: 2rem 0;
+        }
+
+        .flashcard {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            transition: transform 0.5s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .card-face.back {
+            transform: rotateY(180deg);
+            border-color: var(--primary);
+        }
+
+        .card-face-text {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--text);
+            margin-top: 1rem;
+        }
+
+        .card-face-image {
+            max-width: 100%;
+            max-height: 150px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .study-controls {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.3s;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-light);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-header h2 {
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+
+        .study-summary {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .study-summary h3 {
+            color: var(--primary);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .study-summary p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .summary-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            margin: 1rem 0;
+        }
+
+        .switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border);
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .export-import {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .export-import button {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>FlashCards</h1>
+            <p class="subtitle">Aprende a tu ritmo</p>
+        </header>
+
+        <!-- Screen 1: Deck List -->
+        <div id="deckListScreen" class="screen active">
+            <div class="export-import">
+                <button onclick="exportAllDecks()" class="secondary small">💾 Exportar</button>
+                <button onclick="document.getElementById('importFile').click()" class="secondary small">📁 Importar JSON</button>
+                <button onclick="document.getElementById('csvDeckImportFile').click()" class="secondary small">⚡ Importar CSV</button>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importAllDecks(event)">
+                <input type="file" id="csvDeckImportFile" accept=".csv" style="display:none" onchange="importCSVAsNewDeck(event)">
+            </div>
+
+            <div class="deck-list" id="deckList"></div>
+
+            <button onclick="showCreateDeck()">➕ Crear mazo nuevo</button>
+
+            <div id="createDeckForm" class="hidden" style="margin-top: 1rem; background: var(--surface); padding: 1rem; border-radius: 12px; border: 1px solid var(--border);">
+                <div class="form-group">
+                    <label>Nombre del mazo</label>
+                    <input type="text" id="newDeckName" placeholder="Ej: Verbos alemanes">
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button onclick="createDeck()">Crear</button>
+                    <button onclick="hideCreateDeck()" class="secondary">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen 2: Deck Management -->
+        <div id="deckManageScreen" class="screen">
+            <div class="nav-header">
+                <button onclick="showDeckList()" class="secondary small">← Volver</button>
+                <h2 id="deckTitle"></h2>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+                    <button onclick="startDifficultStudy()" class="secondary small">⭐ Difíciles</button>
+                    <button onclick="startStudy()" class="small">📖 Estudiar</button>
+                </div>
+            </div>
+
+            <div class="toggle-switch">
+                <span>🔄 Modo invertido</span>
+                <label class="switch">
+                    <input type="checkbox" id="reverseToggle" onchange="toggleReverse()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label>Importar CSV</label>
+                <input type="file" id="csvImport" accept=".csv" onchange="importCSV(event)">
+                <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.5rem;">
+                    Formato: pregunta,respuesta
+                </div>
+            </div>
+
+            <div style="background: var(--surface); padding: 1rem; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1rem;">
+                <h3 style="font-size: 0.875rem; margin-bottom: 0.75rem;">Añadir tarjeta</h3>
+                <div class="form-group">
+                    <input type="text" id="cardFront" placeholder="Palabra/Pregunta">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="cardBack" placeholder="Traducción/Respuesta">
+                </div>
+                <div class="form-group">
+                    <label>Imagen (opcional)</label>
+                    <input type="file" id="cardImage" accept="image/*">
+                </div>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button onclick="addCard()" id="addCardButton">➕ Añadir</button>
+                    <button onclick="cancelEdit()" id="cancelEditButton" class="secondary hidden">Cancelar edición</button>
+                </div>
+            </div>
+
+            <h3 style="font-size: 0.875rem; margin-bottom: 0.75rem;">Tarjetas (<span id="cardCount">0</span>)</h3>
+            <div class="card-list" id="cardList"></div>
+        </div>
+
+        <!-- Screen 3: Study Mode -->
+        <div id="studyScreen" class="screen">
+            <div class="nav-header">
+                <button onclick="exitStudy()" class="secondary small">← Salir</button>
+                <h2 id="studyTitle"></h2>
+                <div></div>
+            </div>
+
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="statTotal">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="statCurrent">0</div>
+                    <div class="stat-label">Actual</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="statCorrect">0</div>
+                    <div class="stat-label">Correctas</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="statIncorrect">0</div>
+                    <div class="stat-label">Falladas</div>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="flashcard-container" id="flashcardContainer">
+                <div class="flashcard" id="flashcard" onclick="flipCard()">
+                    <div class="card-face front">
+                        <img id="frontImage" class="card-face-image hidden">
+                        <div class="card-face-text" id="frontText">Cargando...</div>
+                    </div>
+                    <div class="card-face back">
+                        <img id="backImage" class="card-face-image hidden">
+                        <div class="card-face-text" id="backText">Respuesta</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="study-controls" id="studyControls">
+                <button onclick="prevCard()" class="secondary">⬅️ Anterior</button>
+                <button onclick="flipCard()">🔄 Voltear</button>
+                <button onclick="nextCard()" class="secondary">Siguiente ➡️</button>
+                <button onclick="markCorrect()">✅ Correcta</button>
+                <button onclick="markIncorrect()" class="secondary">❌ Fallada</button>
+                <button onclick="toggleCurrentCardDifficult()" class="secondary" id="toggleDifficultStudyButton">☆ Difícil</button>
+                <button onclick="shuffleCards()" class="secondary small">🔀 Mezclar</button>
+            </div>
+
+            <div id="studySummary" class="study-summary hidden">
+                <h3 id="summaryTitle">Sesión terminada</h3>
+                <p id="summaryText"></p>
+                <div class="summary-actions">
+                    <button id="reviewErrorsButton" onclick="startFailedReview()" class="hidden">🔁 Repasar falladas</button>
+                    <button id="reviewDifficultButton" onclick="startDifficultStudy()" class="hidden">⭐ Repasar difíciles</button>
+                    <button onclick="restartStudy()" class="secondary">🔄 Reiniciar</button>
+                    <button onclick="exitStudy()" class="secondary">← Volver al mazo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let decks = {};
+        let currentDeck = null;
+        let studyIndex = 0;
+        let correctCount = 0;
+        let incorrectCount = 0;
+        let isFlipped = false;
+        let studyCards = [];
+        let studyBaseTotal = 0;
+        let failedCardIds = new Set();
+        let studyCompleted = false;
+        let reviewingFailedCards = false;
+        let reviewingDifficultCards = false;
+        let reviewRound = 0;
+        let editingCardId = null;
+        let editingCardImage = null;
+
+        // Initialize
+        function init() {
+            loadDecks();
+            ensureAllDeckDefaults();
+            saveDecks();
+            renderDeckList();
+        }
+
+        // LocalStorage
+        function loadDecks() {
+            const saved = localStorage.getItem('flashcards_decks');
+            decks = saved ? JSON.parse(saved) : {};
+        }
+
+        function saveDecks() {
+            localStorage.setItem('flashcards_decks', JSON.stringify(decks));
+        }
+
+        function ensureCardDefaults(card) {
+            if (!card) return;
+            if (typeof card.difficult !== 'boolean') {
+                card.difficult = false;
+            }
+        }
+
+        function ensureDeckCardDefaults(deck) {
+            if (!deck || !Array.isArray(deck.cards)) return;
+            deck.cards.forEach(ensureCardDefaults);
+        }
+
+        function ensureAllDeckDefaults() {
+            Object.values(decks).forEach(ensureDeckCardDefaults);
+        }
+
+        // Navigation
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showDeckList() {
+            renderDeckList();
+            showScreen('deckListScreen');
+        }
+
+        function showDeckManage(deckId) {
+            currentDeck = deckId;
+            ensureDeckCardDefaults(decks[deckId]);
+            document.getElementById('deckTitle').textContent = decks[deckId].name;
+            document.getElementById('reverseToggle').checked = decks[deckId].reverse || false;
+            clearCardForm();
+            renderCardList();
+            showScreen('deckManageScreen');
+        }
+
+        function startStudy() {
+            if (!currentDeck || decks[currentDeck].cards.length === 0) {
+                alert('No hay tarjetas para estudiar');
+                return;
+            }
+
+            ensureDeckCardDefaults(decks[currentDeck]);
+            studyCards = [...decks[currentDeck].cards];
+            studyIndex = 0;
+            studyBaseTotal = studyCards.length;
+            correctCount = 0;
+            incorrectCount = 0;
+            failedCardIds = new Set();
+            isFlipped = false;
+            studyCompleted = false;
+            reviewingFailedCards = false;
+            reviewingDifficultCards = false;
+            reviewRound = 0;
+
+            document.getElementById('studyTitle').textContent = decks[currentDeck].name;
+            hideStudySummary();
+            showStudyArea();
+            updateStudyStats();
+            displayStudyCard();
+            showScreen('studyScreen');
+        }
+
+        function startDifficultStudy() {
+            if (!currentDeck) {
+                alert('No hay mazo seleccionado');
+                return;
+            }
+
+            ensureDeckCardDefaults(decks[currentDeck]);
+            const difficultCards = decks[currentDeck].cards.filter(card => card.difficult);
+
+            if (difficultCards.length === 0) {
+                alert('No hay tarjetas marcadas como difíciles');
+                return;
+            }
+
+            studyCards = [...difficultCards];
+            studyIndex = 0;
+            studyBaseTotal = studyCards.length;
+            correctCount = 0;
+            incorrectCount = 0;
+            failedCardIds = new Set();
+            isFlipped = false;
+            studyCompleted = false;
+            reviewingFailedCards = false;
+            reviewingDifficultCards = true;
+            reviewRound = 0;
+
+            document.getElementById('studyTitle').textContent = `${decks[currentDeck].name} · Difíciles`;
+            hideStudySummary();
+            showStudyArea();
+            updateStudyStats();
+            displayStudyCard();
+            showScreen('studyScreen');
+        }
+
+        function exitStudy() {
+            showDeckManage(currentDeck);
+        }
+
+        function restartStudy() {
+            startStudy();
+        }
+
+        function showStudyArea() {
+            document.getElementById('flashcardContainer').classList.remove('hidden');
+            document.getElementById('studyControls').classList.remove('hidden');
+        }
+
+        function hideStudyArea() {
+            document.getElementById('flashcardContainer').classList.add('hidden');
+            document.getElementById('studyControls').classList.add('hidden');
+        }
+
+        function hideStudySummary() {
+            document.getElementById('studySummary').classList.add('hidden');
+            document.getElementById('reviewErrorsButton').classList.add('hidden');
+            document.getElementById('reviewDifficultButton').classList.add('hidden');
+        }
+
+        function completeStudySession() {
+            studyCompleted = true;
+            hideStudyArea();
+
+            const total = studyBaseTotal;
+            const summaryTitle = document.getElementById('summaryTitle');
+            const summaryText = document.getElementById('summaryText');
+            const reviewButton = document.getElementById('reviewErrorsButton');
+            const reviewDifficultButton = document.getElementById('reviewDifficultButton');
+            const percentage = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+            const failedCount = failedCardIds.size;
+            const difficultCount = decks[currentDeck].cards.filter(card => card.difficult).length;
+
+            reviewButton.classList.add('hidden');
+            reviewDifficultButton.classList.add('hidden');
+
+            if (reviewingDifficultCards) {
+                summaryTitle.textContent = 'Repaso de difíciles terminado';
+                summaryText.textContent = `Has repasado ${total} tarjetas difíciles. Correctas: ${correctCount}. Falladas: ${incorrectCount}.`;
+                if (failedCount > 0) {
+                    reviewButton.textContent = '🔁 Repasar falladas';
+                    reviewButton.classList.remove('hidden');
+                }
+            } else if (!reviewingFailedCards && failedCount > 0) {
+                summaryTitle.textContent = 'Primera vuelta terminada';
+                summaryText.textContent = `Has acertado ${correctCount} de ${total} tarjetas (${percentage}%). Tienes ${failedCount} falladas para repasar.`;
+                reviewButton.textContent = '🔁 Repasar falladas';
+                reviewButton.classList.remove('hidden');
+                if (difficultCount > 0) {
+                    reviewDifficultButton.classList.remove('hidden');
+                }
+            } else if (reviewingFailedCards && failedCount > 0) {
+                summaryTitle.textContent = `Repaso ${reviewRound} completado`;
+                summaryText.textContent = `Has terminado este repaso. Correctas: ${correctCount}. Sigues teniendo ${failedCount} tarjetas falladas.`;
+                reviewButton.textContent = '🔁 Seguir repasando falladas';
+                reviewButton.classList.remove('hidden');
+                if (difficultCount > 0) {
+                    reviewDifficultButton.classList.remove('hidden');
+                }
+            } else if (reviewingFailedCards) {
+                summaryTitle.textContent = `Repaso ${reviewRound} completado`;
+                summaryText.textContent = `¡Perfecto! Has dejado todas las falladas a cero. Correctas: ${correctCount}.`;
+                if (difficultCount > 0) {
+                    reviewDifficultButton.classList.remove('hidden');
+                }
+            } else {
+                summaryTitle.textContent = 'Sesión terminada';
+                summaryText.textContent = `Has completado el mazo. Correctas: ${correctCount}. Falladas: ${incorrectCount}.`;
+                if (difficultCount > 0) {
+                    reviewDifficultButton.classList.remove('hidden');
+                }
+            }
+
+            document.getElementById('studySummary').classList.remove('hidden');
+            updateStudyStats();
+        }
+
+        function startFailedReview() {
+            const failedCards = decks[currentDeck].cards.filter(card => failedCardIds.has(card.id));
+            if (failedCards.length === 0) {
+                alert('No hay tarjetas falladas para repasar');
+                return;
+            }
+
+            studyCards = [...failedCards];
+            studyIndex = 0;
+            studyBaseTotal = studyCards.length;
+            correctCount = 0;
+            incorrectCount = 0;
+            failedCardIds = new Set();
+            isFlipped = false;
+            studyCompleted = false;
+            reviewingFailedCards = true;
+            reviewingDifficultCards = false;
+            reviewRound++;
+
+            hideStudySummary();
+            showStudyArea();
+            updateStudyStats();
+            displayStudyCard();
+        }
+
+        // Deck Management
+        function showCreateDeck() {
+            document.getElementById('createDeckForm').classList.remove('hidden');
+            document.getElementById('newDeckName').focus();
+        }
+
+        function hideCreateDeck() {
+            document.getElementById('createDeckForm').classList.add('hidden');
+            document.getElementById('newDeckName').value = '';
+        }
+
+        function createDeck() {
+            const name = document.getElementById('newDeckName').value.trim();
+            if (!name) {
+                alert('Introduce un nombre para el mazo');
+                return;
+            }
+
+            const id = Date.now().toString();
+            decks[id] = {
+                id: id,
+                name: name,
+                cards: [],
+                reverse: false,
+                created: new Date().toISOString()
+            };
+
+            saveDecks();
+            hideCreateDeck();
+            renderDeckList();
+        }
+
+        function deleteDeck(deckId, event) {
+            event.stopPropagation();
+            if (confirm('¿Eliminar este mazo?')) {
+                delete decks[deckId];
+                saveDecks();
+                renderDeckList();
+            }
+        }
+
+        function renderDeckList() {
+            const list = document.getElementById('deckList');
+            const deckArray = Object.values(decks);
+            deckArray.forEach(ensureDeckCardDefaults);
+
+            if (deckArray.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📚</div>
+                        <p>No hay mazos todavía</p>
+                        <p style="font-size: 0.875rem;">Crea tu primer mazo para empezar</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = deckArray.map(deck => `
+                <div class="deck-item" onclick="showDeckManage('${deck.id}')">
+                    <div class="deck-info">
+                        <h3>${deck.name}</h3>
+                        <div class="deck-meta">${deck.cards.length} tarjetas · ${deck.cards.filter(card => card.difficult).length} difíciles</div>
+                    </div>
+                    <div class="deck-actions" onclick="event.stopPropagation()">
+                        <button onclick="deleteDeck('${deck.id}', event)" class="secondary small">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Card Management
+        function toggleReverse() {
+            decks[currentDeck].reverse = document.getElementById('reverseToggle').checked;
+            saveDecks();
+        }
+
+        function updateCardFormButtons() {
+            const addButton = document.getElementById('addCardButton');
+            const cancelButton = document.getElementById('cancelEditButton');
+
+            if (editingCardId) {
+                addButton.textContent = '💾 Guardar cambios';
+                cancelButton.classList.remove('hidden');
+            } else {
+                addButton.textContent = '➕ Añadir';
+                cancelButton.classList.add('hidden');
+            }
+        }
+
+        function addCard() {
+            const front = document.getElementById('cardFront').value.trim();
+            const back = document.getElementById('cardBack').value.trim();
+            const imageFile = document.getElementById('cardImage').files[0];
+
+            if (!front || !back) {
+                alert('Completa ambos campos');
+                return;
+            }
+
+            const saveCard = (imageData) => {
+                if (editingCardId) {
+                    const card = decks[currentDeck].cards.find(c => c.id === editingCardId);
+                    if (!card) {
+                        alert('No se encontró la tarjeta a editar');
+                        clearCardForm();
+                        renderCardList();
+                        return;
+                    }
+
+                    card.front = front;
+                    card.back = back;
+                    card.image = imageData;
+                } else {
+                    decks[currentDeck].cards.push({
+                        id: Date.now().toString(),
+                        front: front,
+                        back: back,
+                        image: imageData,
+                        difficult: false
+                    });
+                }
+
+                saveDecks();
+                clearCardForm();
+                renderCardList();
+            };
+
+            if (imageFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    saveCard(e.target.result);
+                };
+                reader.readAsDataURL(imageFile);
+            } else {
+                saveCard(editingCardId ? editingCardImage : null);
+            }
+        }
+
+        function clearCardForm() {
+            document.getElementById('cardFront').value = '';
+            document.getElementById('cardBack').value = '';
+            document.getElementById('cardImage').value = '';
+            editingCardId = null;
+            editingCardImage = null;
+            updateCardFormButtons();
+        }
+
+        function cancelEdit() {
+            clearCardForm();
+        }
+
+        function editCard(cardId) {
+            const card = decks[currentDeck].cards.find(c => c.id === cardId);
+            if (!card) return;
+
+            editingCardId = cardId;
+            editingCardImage = card.image || null;
+            document.getElementById('cardFront').value = card.front;
+            document.getElementById('cardBack').value = card.back;
+            updateCardFormButtons();
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function deleteCard(cardId) {
+            if (!confirm('¿Eliminar esta tarjeta?')) return;
+            decks[currentDeck].cards = decks[currentDeck].cards.filter(c => c.id !== cardId);
+            saveDecks();
+            renderCardList();
+        }
+
+        function renderCardList() {
+            const list = document.getElementById('cardList');
+            const cards = decks[currentDeck].cards;
+            const reverse = decks[currentDeck].reverse;
+
+            ensureDeckCardDefaults(decks[currentDeck]);
+            document.getElementById('cardCount').textContent = cards.length;
+
+            if (cards.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state" style="padding: 2rem 1rem;">
+                        <div class="empty-state-icon">📝</div>
+                        <p>No hay tarjetas todavía</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = cards.map(card => `
+                <div class="card-item">
+                    ${card.image ? `<img src="${card.image}" class="card-image-preview">` : ''}
+                    <div class="card-content">
+                        <div class="card-front">${reverse ? card.back : card.front} ${card.difficult ? '⭐' : ''}</div>
+                        <div class="card-back">${reverse ? card.front : card.back}</div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+                        <button onclick="toggleCardDifficult('${card.id}')" class="secondary small">${card.difficult ? '⭐' : '☆'}</button>
+                        <button onclick="editCard('${card.id}')" class="secondary small">✏️</button>
+                        <button onclick="deleteCard('${card.id}')" class="secondary small">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleCardDifficult(cardId) {
+            const card = decks[currentDeck].cards.find(c => c.id === cardId);
+            if (!card) return;
+            ensureCardDefaults(card);
+            card.difficult = !card.difficult;
+            saveDecks();
+            renderCardList();
+            if (document.getElementById('studyScreen').classList.contains('active')) {
+                updateCurrentStudyDifficultButton();
+            }
+        }
+
+        function getCurrentStudyCard() {
+            if (studyCards.length === 0) return null;
+            return studyCards[studyIndex] || null;
+        }
+
+        function updateCurrentStudyDifficultButton() {
+            const button = document.getElementById('toggleDifficultStudyButton');
+            const card = getCurrentStudyCard();
+            if (!button || !card) return;
+            ensureCardDefaults(card);
+            button.textContent = card.difficult ? '⭐ Difícil' : '☆ Difícil';
+        }
+
+        function toggleCurrentCardDifficult() {
+            const card = getCurrentStudyCard();
+            if (!card) return;
+            ensureCardDefaults(card);
+            card.difficult = !card.difficult;
+            saveDecks();
+            updateCurrentStudyDifficultButton();
+            if (document.getElementById('deckManageScreen').classList.contains('active')) {
+                renderCardList();
+            }
+        }
+
+        // CSV Import
+        function normalizeCSVText(text) {
+            if (!text) return '';
+            return text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        }
+
+        function parseCSVLine(line, separator) {
+            const values = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                const nextChar = line[i + 1];
+
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === separator && !inQuotes) {
+                    values.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+
+            values.push(current.trim());
+            return values.map(value => value.replace(/^"|"$/g, '').trim());
+        }
+
+        function detectCSVSeparator(lines) {
+            let commaScore = 0;
+            let semicolonScore = 0;
+            const sample = lines.slice(0, 5);
+
+            sample.forEach(line => {
+                commaScore += (line.match(/,/g) || []).length;
+                semicolonScore += (line.match(/;/g) || []).length;
+            });
+
+            return semicolonScore > commaScore ? ';' : ',';
+        }
+
+        function looksLikeHeader(parts) {
+            if (parts.length < 2) return false;
+
+            const first = (parts[0] || '').trim().toLowerCase();
+            const second = (parts[1] || '').trim().toLowerCase();
+            const validFirst = ['pregunta', 'question', 'front', 'anverso'];
+            const validSecond = ['respuesta', 'answer', 'back', 'reverso'];
+
+            return validFirst.includes(first) && validSecond.includes(second);
+        }
+
+        function getUniqueDeckName(baseName) {
+            const cleanBase = (baseName || 'Nuevo mazo').trim() || 'Nuevo mazo';
+            const existingNames = Object.values(decks).map(deck => deck.name.toLowerCase());
+
+            if (!existingNames.includes(cleanBase.toLowerCase())) {
+                return cleanBase;
+            }
+
+            let counter = 2;
+            let candidate = `${cleanBase} (${counter})`;
+
+            while (existingNames.includes(candidate.toLowerCase())) {
+                counter++;
+                candidate = `${cleanBase} (${counter})`;
+            }
+
+            return candidate;
+        }
+
+        function extractCardsFromCSVText(text) {
+            const normalizedText = normalizeCSVText(text);
+            const lines = normalizedText.split('\n').map(line => line.trim()).filter(line => line !== '');
+
+            if (lines.length === 0) {
+                return { cards: [], skippedCount: 0, isEmpty: true };
+            }
+
+            const separator = detectCSVSeparator(lines);
+            let startIndex = 0;
+            const firstRow = parseCSVLine(lines[0], separator);
+
+            if (looksLikeHeader(firstRow)) {
+                startIndex = 1;
+            }
+
+            const cards = [];
+            let skippedCount = 0;
+
+            for (let i = startIndex; i < lines.length; i++) {
+                const parts = parseCSVLine(lines[i], separator);
+
+                if (parts.length < 2) {
+                    skippedCount++;
+                    continue;
+                }
+
+                const front = parts[0];
+                const back = parts[1];
+
+                if (!front || !back) {
+                    skippedCount++;
+                    continue;
+                }
+
+                cards.push({
+                    id: `${Date.now()}_${i}_${Math.random().toString(36).slice(2, 8)}`,
+                    front: front,
+                    back: back,
+                    image: null,
+                    difficult: false
+                });
+            }
+
+            return { cards, skippedCount, isEmpty: false };
+        }
+
+        function importCSVAsNewDeck(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const result = extractCardsFromCSVText(e.target.result);
+
+                if (result.isEmpty) {
+                    alert('El CSV está vacío');
+                    event.target.value = '';
+                    return;
+                }
+
+                if (result.cards.length === 0) {
+                    alert('No se pudo importar ninguna tarjeta');
+                    event.target.value = '';
+                    return;
+                }
+
+                const rawName = file.name.replace(/\.csv$/i, '').replace(/[_-]+/g, ' ').trim();
+                const deckName = getUniqueDeckName(rawName || 'Nuevo mazo');
+                const deckId = Date.now().toString();
+
+                decks[deckId] = {
+                    id: deckId,
+                    name: deckName,
+                    cards: result.cards,
+                    reverse: false,
+                    created: new Date().toISOString()
+                };
+
+                saveDecks();
+                event.target.value = '';
+
+                if (result.skippedCount > 0) {
+                    alert(`Mazo "${deckName}" creado con ${result.cards.length} tarjetas. ${result.skippedCount} filas omitidas.`);
+                } else {
+                    alert(`Mazo "${deckName}" creado con ${result.cards.length} tarjetas.`);
+                }
+
+                showDeckManage(deckId);
+            };
+
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function importCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const result = extractCardsFromCSVText(e.target.result);
+
+                if (result.isEmpty) {
+                    alert('El CSV está vacío');
+                    event.target.value = '';
+                    return;
+                }
+
+                if (result.cards.length === 0) {
+                    alert('No se pudo importar ninguna tarjeta');
+                    event.target.value = '';
+                    return;
+                }
+
+                decks[currentDeck].cards.push(...result.cards);
+                saveDecks();
+                renderCardList();
+                event.target.value = '';
+
+                if (result.skippedCount > 0) {
+                    alert(`${result.cards.length} tarjetas importadas. ${result.skippedCount} filas omitidas.`);
+                } else {
+                    alert(`${result.cards.length} tarjetas importadas.`);
+                }
+            };
+
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        // Study Mode
+        function displayStudyCard() {
+            if (studyCards.length === 0) return;
+
+            const card = studyCards[studyIndex];
+            const reverse = decks[currentDeck].reverse;
+            const flashcard = document.getElementById('flashcard');
+
+            flashcard.classList.remove('flipped');
+            isFlipped = false;
+
+            // Front
+            const frontText = document.getElementById('frontText');
+            const frontImage = document.getElementById('frontImage');
+            frontText.textContent = reverse ? card.back : card.front;
+            
+            if (card.image) {
+                frontImage.src = card.image;
+                frontImage.classList.remove('hidden');
+            } else {
+                frontImage.classList.add('hidden');
+            }
+
+            // Back
+            const backText = document.getElementById('backText');
+            const backImage = document.getElementById('backImage');
+            backText.textContent = reverse ? card.front : card.back;
+            
+            if (card.image) {
+                backImage.src = card.image;
+                backImage.classList.remove('hidden');
+            } else {
+                backImage.classList.add('hidden');
+            }
+
+            updateCurrentStudyDifficultButton();
+            updateStudyStats();
+        }
+
+        function flipCard() {
+            const flashcard = document.getElementById('flashcard');
+            flashcard.classList.toggle('flipped');
+            isFlipped = !isFlipped;
+        }
+
+        function nextCard() {
+            if (studyCompleted || studyCards.length === 0) return;
+
+            // "Siguiente" no evalúa la tarjeta: la manda al final del mazo
+            // para que vuelva a salir más tarde hasta que se marque como
+            // correcta o fallada.
+            if (studyCards.length > 1) {
+                const currentCard = studyCards.splice(studyIndex, 1)[0];
+                studyCards.push(currentCard);
+            }
+
+            if (studyIndex >= studyCards.length) {
+                studyIndex = 0;
+            }
+
+            displayStudyCard();
+        }
+
+        function prevCard() {
+            if (studyCompleted || studyCards.length === 0) return;
+
+            if (studyIndex > 0) {
+                studyIndex--;
+                displayStudyCard();
+            }
+        }
+
+        function markCorrect() {
+            if (studyCompleted || studyCards.length === 0) return;
+
+            const currentCard = studyCards[studyIndex];
+            if (!currentCard) return;
+
+            failedCardIds.delete(currentCard.id);
+            correctCount++;
+            studyCards.splice(studyIndex, 1);
+
+            if (studyIndex >= studyCards.length && studyCards.length > 0) {
+                studyIndex = 0;
+            }
+
+            if (studyCards.length === 0) {
+                completeStudySession();
+            } else {
+                displayStudyCard();
+            }
+        }
+
+        function markIncorrect() {
+            if (studyCompleted || studyCards.length === 0) return;
+
+            const currentCard = studyCards[studyIndex];
+            if (!currentCard) return;
+
+            failedCardIds.add(currentCard.id);
+            incorrectCount++;
+            studyCards.splice(studyIndex, 1);
+
+            if (studyIndex >= studyCards.length && studyCards.length > 0) {
+                studyIndex = 0;
+            }
+
+            if (studyCards.length === 0) {
+                completeStudySession();
+            } else {
+                displayStudyCard();
+            }
+        }
+
+        function shuffleCards() {
+            if (studyCompleted || studyCards.length === 0) return;
+
+            for (let i = studyCards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [studyCards[i], studyCards[j]] = [studyCards[j], studyCards[i]];
+            }
+            studyIndex = 0;
+            displayStudyCard();
+        }
+
+        function updateStudyStats() {
+            document.getElementById('statTotal').textContent = studyBaseTotal;
+            document.getElementById('statCurrent').textContent = studyCards.length === 0 ? studyBaseTotal : Math.min(correctCount + incorrectCount + 1, studyBaseTotal);
+            document.getElementById('statCorrect').textContent = correctCount;
+            document.getElementById('statIncorrect').textContent = incorrectCount;
+
+            const progress = studyBaseTotal === 0 ? 0 : ((correctCount + incorrectCount) / studyBaseTotal) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        // Import/Export
+        function exportAllDecks() {
+            const dataStr = JSON.stringify(decks, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'flashcards_backup.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importAllDecks(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (confirm('¿Importar mazos? Esto reemplazará todos los mazos actuales.')) {
+                        decks = imported;
+                        ensureAllDeckDefaults();
+                        saveDecks();
+                        renderDeckList();
+                        alert('Mazos importados correctamente');
+                    }
+                } catch (err) {
+                    alert('Error al importar: archivo no válido');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            const studyActive = document.getElementById('studyScreen').classList.contains('active');
+            if (!studyActive) return;
+
+            switch(e.key) {
+                case 'ArrowLeft':
+                    prevCard();
+                    break;
+                case 'ArrowRight':
+                    nextCard();
+                    break;
+                case ' ':
+                    e.preventDefault();
+                    flipCard();
+                    break;
+                case 'Enter':
+                    markCorrect();
+                    break;
+                case 'Backspace':
+                    e.preventDefault();
+                    markIncorrect();
+                    break;
+            }
+        });
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
